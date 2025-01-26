@@ -3,48 +3,475 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <title>File Upload Web App</title>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .embed-responsive-item {
+            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #file-preview {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            margin: 0 auto;
+            display: none; /* Hide preview by default */
+        }
+        .about-card {
+            margin-bottom: 20px;
+        }
+        .about-card img {
+            margin-bottom: 15px;
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        .log-entry.shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .form-control, .form-control-file {
+            border-radius: 0.25rem;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .section-title {
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            color: #333;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: #007bff;
+            margin: 10px auto 0;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            position: relative;
+        }
+        h1::after {
+            content: '';
+            display: block;
+            width: 70px;
+            height: 4px;
+            background-color: #007bff;
+            margin: 10px auto 0;
+        }
+        h2, h3, h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            position: relative;
+        }
+        h2::after, h3::after, h4::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: #007bff;
+            margin: 10px auto 0;
+        }
+        .section-divider {
+            border-right: 1px solid #ddd;
+        }
+        @media (max-width: 768px) {
+            #file-preview {
+                height: auto;
+            }
+            .embed-responsive-item {
+                object-fit: contain;
+                width: 100%;
+                height: auto;
+            }
+            .section-divider {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                margin-bottom: 20px;
+            }
+        }
+        .log-container {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            position: relative;
+        }
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #ffffff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-entry .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .log-entry .log-message {
+            margin-top: 5px;
+        }
+        .log-entry .log-timestamp {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .log-entry .log-level {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .log-entry.info .log-level {
+            color: #17a2b8;
+        }
+        .log-entry.error .log-level {
+            color: #dc3545;
+        }
+        .log-entry.warning .log-level {
+            color: #ffc107;
+        }
+        .log-entry.success .log-level {
+            color: #28a745;
+        }
+        .log-entry .log-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .log-entry .log-actions button {
+            margin-left: 5px;
+        }
+        .log-entry .log-details {
+            margin-top: 10px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .clear-logs-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .section-divider {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                margin-bottom: 20px;
+            }
+        }
+        .file-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            font-size: 17px;
+        }
+
+        .toast.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @-webkit-keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @-webkit-keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>File Upload Web App</h1>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">File Upload Web App</h1>
         
-        <section id="customer-section">
-            <h2>Customer Section</h2>
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                <label for="file-upload">Upload a file:</label>
-                <input type="file" id="file-upload" name="file" required>
-                <button type="submit">Submit</button>
-            </form>
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 section-divider">
+                        <h2 class="section-title">Customer Section</h2>
+                        <form id="upload-form" enctype="multipart/form-data" class="form">
+                            <div class="form-group">
+                                <label for="uploader">Your Name:</label>
+                                <input type="text" id="uploader" name="uploader" class="form-control" placeholder="Your Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="file-upload">Upload a file:</label>
+                                <input type="file" id="file-upload" name="file" class="form-control-file" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h2 class="section-title">Shopkeeper Section</h2>
+                        <h3 class="text-center">Uploaded Files:</h3>
+                        <div id="no-files-message" class="text-center text-muted">No files uploaded yet.</div>
+                        <div class="file-list-container">
+                            <table id="file-table" class="table table-striped" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Uploader</th>
+                                        <th>Timestamp</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-list">
+                                    <!-- Dynamically populated list of uploaded files -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section id="log-section" class="mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="section-title">Logs</h2>
+                    <div class="clear-logs-container">
+                        <button id="clear-logs" class="btn btn-sm btn-danger">Clear Logs</button>
+                    </div>
+                    <div id="log" class="log-container">
+                        <!-- Logs will be displayed here -->
+                    </div>
+                </div>
+            </div>
         </section>
 
-        <section id="shopkeeper-section">
-            <h2>Shopkeeper Section</h2>
-            <h3>Uploaded Files:</h3>
-            <ul id="file-list">
-                <!-- Dynamically populated list of uploaded files -->
-            </ul>
+        <section id="about-section" class="mb-4">
+            <h2 class="section-title">About</h2>
+            <div class="card about-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 text-center section-divider">
+                            <h3>Business Owner: Shubhi Rawat</h3>
+                            <img src="/res/shubhi.jpg" alt="Shubhi Rawat" class="rounded-circle" width="150">
+                            <p>Shubhi Rawat is the visionary behind this project, ensuring that customers and shopkeepers have a seamless experience.</p>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h4>App Developer: Hardik Rawat</h4>
+                            <img src="https://avatars.githubusercontent.com/u/84527217?v=4" alt="Hardik Rawat" class="rounded-circle" width="150">
+                            <p>Hardik Rawat is the developer of this application, ensuring that it runs smoothly and efficiently.</p>
+                            <p>
+                                <a href="https://github.com/hardikrawat" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
+                                <a href="https://www.linkedin.com/in/hardikrawat" target="_blank" class="btn btn-outline-dark btn-sm">LinkedIn</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
-
+    <div id="toast" class="toast"></div>
     <script>
-        // Fetch and display the list of uploaded files for the shopkeeper
-        async function fetchUploadedFiles() {
-            const response = await fetch('/uploaded-files');
-            const files = await response.json();
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('File uploaded successfully!');
+                    updateFileList();
+                    addLog('File uploaded successfully', 'success', data);
+                } else {
+                    showToast('File upload failed. Please try again.');
+                    addLog('File upload failed', 'error', data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred. Please try again.');
+                addLog('An error occurred: ' + error.message, 'error', error);
+            });
+        });
 
-            files.forEach(file => {
-                const listItem = document.createElement('li');
-                listItem.textContent = file;
-                fileList.appendChild(listItem);
+        function updateFileList() {
+            fetch('/files')
+            .then(response => response.json())
+            .then(files => {
+                var fileTable = document.getElementById('file-table');
+                var fileList = document.getElementById('file-list');
+                var noFilesMessage = document.getElementById('no-files-message');
+                fileList.innerHTML = '';
+                if (files.length > 0) {
+                    noFilesMessage.style.display = 'none';
+                    fileTable.style.display = 'table';
+                    files.forEach(file => {
+                        var row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${file.name}</td>
+                            <td>${file.uploader}</td>
+                            <td>${file.timestamp}</td>
+                            <td class="action-buttons">
+                                <a href="/uploads/${file.name}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="printFile('${file.name}')">Print</button>
+                            </td>
+                        `;
+                        fileList.appendChild(row);
+                    });
+                } else {
+                    noFilesMessage.style.display = 'block';
+                    fileTable.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addLog('Error fetching file list: ' + error.message, 'error', error);
             });
         }
 
-        // Call the function to fetch files on page load
-        window.onload = fetchUploadedFiles;
+        function addLog(message, level, details) {
+            var logContainer = document.getElementById('log');
+            var logEntry = document.createElement('div');
+            logEntry.className = 'log-entry ' + level;
+            logEntry.innerHTML = `
+                <div class="log-header">
+                    <span class="log-level">${level.toUpperCase()}</span>
+                    <span class="log-timestamp">${new Date().toLocaleString()}</span>
+                </div>
+                <div class="log-message">${message}</div>
+                <div class="log-actions">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="removeLog(this)">Remove</button>
+                    <button class="btn btn-sm btn-outline-info" onclick="showDetails(this)">Details</button>
+                </div>
+                <pre class="log-details">${JSON.stringify(details, null, 2)}</pre>
+            `;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function removeLog(button) {
+            var logEntry = button.closest('.log-entry');
+            logEntry.remove();
+        }
+
+        function showDetails(button) {
+            var logDetails = button.closest('.log-entry').querySelector('.log-details');
+            logDetails.style.display = logDetails.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function printFile(filename) {
+            var printWindow = window.open(`/uploads/${filename}`, '_blank');
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }
+
+        document.getElementById('clear-logs').addEventListener('click', function() {
+            document.getElementById('log').innerHTML = '';
+        });
+
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            setTimeout(function() {
+                toast.className = toast.className.replace('show', '');
+            }, 3000);
+        }
+
+        // Initial file list update
+        updateFileList();
     </script>
 </body>
 </html>
