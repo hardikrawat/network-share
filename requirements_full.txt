@@ -7,4 +7,3 @@ Jinja2==3.1.6
 MarkupSafe==3.0.3
 six==1.17.0
 Werkzeug==2.2.2
-pyngrok

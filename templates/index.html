@@ -3,475 +3,855 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <title>File Upload Web App</title>
+    <title>Print Shop System</title>
+    <link rel="icon" href="/res/favicon.jpg" type="image/jpeg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --main-yellow: #2563eb; /* Primary Blue */
+            --main-cyan: #3b82f6; /* Secondary Blue */
+            --main-magenta: #ef4444; /* Danger Red */
+            --main-green: #10b981; /* Success Green */
+            --border-width: 1px;
+            --shadow-offset: 4px;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            background-color: #f8f9fa;
-        }
-        .embed-responsive-item {
-            object-fit: contain;
-            width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-        }
-        #file-preview {
-            width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            margin: 0 auto;
-            display: none; /* Hide preview by default */
-        }
-        .about-card {
-            margin-bottom: 20px;
-        }
-        .about-card img {
-            margin-bottom: 15px;
-        }
-        .shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-            100% {
-                background-position: -200% 0;
-            }
-        }
-        .log-entry.shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        .card {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border: none;
-            border-radius: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: 500;
+            display: flex;
+            height: 100vh;
             overflow: hidden;
-            transition: transform 0.2s ease-in-out;
         }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card-body {
+
+        /* Modern Box utilities */
+        .neo-box {
+            background-color: #fff;
+            border: var(--border-width) solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
             padding: 20px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-        .form-control, .form-control-file {
-            border-radius: 0.25rem;
-        }
-        .table th, .table td {
-            vertical-align: middle;
-        }
-        .section-title {
             margin-bottom: 20px;
-            font-size: 1.25rem;
+        }
+
+        .neo-btn {
+            background-color: var(--main-yellow);
+            color: #fff;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 10px 20px;
             font-weight: 600;
-            text-align: center;
-            color: #333;
-            position: relative;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: #007bff;
-            margin: 10px auto 0;
+        .neo-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-            position: relative;
+        .neo-btn:active {
+            transform: translateY(1px);
         }
-        h1::after {
-            content: '';
-            display: block;
-            width: 70px;
-            height: 4px;
-            background-color: #007bff;
-            margin: 10px auto 0;
-        }
-        h2, h3, h4 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #333;
-            position: relative;
-        }
-        h2::after, h3::after, h4::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: #007bff;
-            margin: 10px auto 0;
-        }
-        .section-divider {
-            border-right: 1px solid #ddd;
-        }
-        @media (max-width: 768px) {
-            #file-preview {
-                height: auto;
-            }
-            .embed-responsive-item {
-                object-fit: contain;
-                width: 100%;
-                height: auto;
-            }
-            .section-divider {
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-                margin-bottom: 20px;
-            }
-        }
-        .log-container {
-            height: 300px;
-            overflow-y: auto;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 10px;
-            position: relative;
-        }
-        .log-entry {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            background-color: #ffffff;
-            border-radius: 5px;
+        .neo-btn.cyan { background-color: var(--main-cyan); color: #fff; }
+        .neo-btn.magenta { background-color: var(--main-magenta); color: white; }
+        .neo-btn.green { background-color: var(--main-green); color: white; }
+
+        .neo-input {
+            border: var(--border-width) solid var(--border-color);
+            padding: 12px;
+            font-weight: 500;
+            width: 100%;
+            border-radius: 6px;
             margin-bottom: 10px;
+            color: var(--text-color);
+            transition: border-color 0.2s;
+        }
+        .neo-input:focus {
+            outline: none;
+            border-color: var(--main-yellow);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .neo-select {
+            border: var(--border-width) solid var(--border-color);
+            padding: 8px 12px;
+            font-weight: 500;
+            border-radius: 6px;
+            color: var(--text-color);
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .neo-select:focus {
+            outline: none;
+            border-color: var(--main-yellow);
+        }
+
+        .neo-badge {
+            display: inline-block;
+            background-color: #e5e7eb;
+            color: var(--text-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        /* Layout */
+        #sidebar {
+            width: 250px;
+            background-color: #fff;
+            border-right: var(--border-width) solid var(--border-color);
             display: flex;
             flex-direction: column;
+            z-index: 10;
         }
-        .log-entry:last-child {
-            border-bottom: none;
+        
+        .logo-area {
+            background-color: var(--main-yellow);
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-bottom: var(--border-width) solid var(--border-color);
         }
-        .log-entry .log-header {
+
+        .nav-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: #f3f4f6;
+            color: var(--main-yellow);
+            border-left: 4px solid var(--main-yellow);
+        }
+
+        #main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f9fafb;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 30px;
         }
-        .log-entry .log-message {
-            margin-top: 5px;
+        .header-top h1 {
+            font-weight: 700;
+            color: var(--text-color);
         }
-        .log-entry .log-timestamp {
-            font-size: 0.8rem;
-            color: #888;
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .log-entry .log-level {
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .stat-card h3 {
             font-size: 0.9rem;
-            font-weight: bold;
-        }
-        .log-entry.info .log-level {
-            color: #17a2b8;
-        }
-        .log-entry.error .log-level {
-            color: #dc3545;
-        }
-        .log-entry.warning .log-level {
-            color: #ffc107;
-        }
-        .log-entry.success .log-level {
-            color: #28a745;
-        }
-        .log-entry .log-actions {
-            display: flex;
-            align-items: center;
-            margin-top: 5px;
-        }
-        .log-entry .log-actions button {
-            margin-left: 5px;
-        }
-        .log-entry .log-details {
-            margin-top: 10px;
-            background-color: #f1f1f1;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .clear-logs-container {
-            display: flex;
-            justify-content: flex-end;
+            color: var(--text-light);
+            text-transform: uppercase;
             margin-bottom: 10px;
         }
-        .container {
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        /* Mobile specific (Customer View) */
+        #customer-view {
+            display: none;
             width: 100%;
-            max-width: 1200px;
-            margin: auto;
+            max-width: 500px;
+            margin: 20px auto;
             padding: 20px;
         }
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            .section-divider {
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-                margin-bottom: 20px;
-            }
-        }
-        .file-list-container {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .action-buttons {
+        
+        .service-checkbox {
             display: flex;
-            gap: 5px;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .service-checkbox:hover {
+            border-color: var(--main-yellow);
+            background: #f8fafc;
+        }
+        
+        .service-checkbox input {
+            transform: scale(1.3);
+            margin-right: 15px;
+            accent-color: var(--main-yellow);
+        }
+
+        @media (max-width: 768px) {
+            #sidebar, #main-content {
+                display: none !important;
+            }
+            #customer-view {
+                display: block;
+            }
+            body {
+                background-color: var(--bg-color);
+            }
+        }
+        
+        .hidden { display: none !important; }
         .toast {
-            visibility: hidden;
-            min-width: 250px;
-            margin-left: -125px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 2px;
-            padding: 16px;
             position: fixed;
-            z-index: 1;
-            left: 50%;
-            bottom: 30px;
-            font-size: 17px;
+            bottom: 20px;
+            right: 20px;
+            background: #1f2937;
+            color: #fff;
+            padding: 15px 25px;
+            font-weight: 500;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 1000;
         }
-
-        .toast.show {
-            visibility: visible;
-            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        
+        .lang-btn {
+            background-color: #f3f4f6;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.8rem;
+            transition: all 0.2s;
         }
-
-        @-webkit-keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-
-        @-webkit-keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-
-        @keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
+        .lang-btn:hover {
+            background-color: #e5e7eb;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">File Upload Web App</h1>
+
+    <!-- CUSTOMER VIEW (MOBILE ONLY) -->
+    <div id="customer-view" class="neo-box" style="padding: 15px; margin: 10px auto; width: 95%; max-width: 450px;">
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button class="lang-btn" onclick="toggleLanguage()" id="mobile-lang-btn">EN</button>
+        </div>
+        <h1 data-i18n="uploadForPrint" style="text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--main-yellow); font-weight: 700;">Print Express</h1>
+        <form id="customer-form">
+            <div style="background: #fff; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <label data-i18n="selectFile" style="font-size: 1.1rem; display: block; margin-bottom: 8px; color: var(--text-color); font-weight: 600;">1. Select File</label>
+                <input type="file" id="cust-file" class="neo-input" style="font-size: 1rem; padding: 10px; margin-bottom: 0;" required>
+            </div>
+            
+            <div style="background: #fff; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <label data-i18n="selectServices" style="font-size: 1.1rem; display: block; margin-bottom: 8px; color: var(--text-color); font-weight: 600;">2. Select Services</label>
+                <div id="customer-services-list" style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            
+            <div style="font-size: 1.3rem; margin: 20px 0; text-align: center; padding: 15px; border-top: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">
+                <span data-i18n="total">Total</span>: ₹<span id="cust-total" style="color: var(--main-yellow);">0.00</span>
+            </div>
+            
+            <button data-i18n="submitOrder" type="submit" class="neo-btn" style="width: 100%; font-size: 1.2rem; padding: 15px;">Submit Order</button>
+        </form>
+    </div>
+
+
+    <!-- SHOPKEEPER DASHBOARD (DESKTOP) -->
+    <div id="sidebar">
+        <div class="logo-area">
+            PRINT.OS
+            <button class="lang-btn" onclick="toggleLanguage()" id="desktop-lang-btn">HI</button>
+        </div>
+        <div class="nav-item active" onclick="switchTab('orders')" data-i18n="ordersCenter">Orders Center</div>
+        <div class="nav-item" onclick="switchTab('catalog')" data-i18n="serviceCatalog">Service Catalog</div>
+        <div class="nav-item" onclick="switchTab('expenses')" data-i18n="logExpenses">Log Expenses</div>
+        <div class="nav-item" onclick="switchTab('finance')" data-i18n="financeDash">Finance Dash</div>
         
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 section-divider">
-                        <h2 class="section-title">Customer Section</h2>
-                        <form id="upload-form" enctype="multipart/form-data" class="form">
-                            <div class="form-group">
-                                <label for="uploader">Your Name:</label>
-                                <input type="text" id="uploader" name="uploader" class="form-control" placeholder="Your Name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="file-upload">Upload a file:</label>
-                                <input type="file" id="file-upload" name="file" class="form-control-file" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-block">Submit</button>
-                        </form>
-                    </div>
-                    <div class="col-md-6">
-                        <h2 class="section-title">Shopkeeper Section</h2>
-                        <h3 class="text-center">Uploaded Files:</h3>
-                        <div id="no-files-message" class="text-center text-muted">No files uploaded yet.</div>
-                        <div class="file-list-container">
-                            <table id="file-table" class="table table-striped" style="display: none;">
-                                <thead>
-                                    <tr>
-                                        <th>File Name</th>
-                                        <th>Uploader</th>
-                                        <th>Timestamp</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="file-list">
-                                    <!-- Dynamically populated list of uploaded files -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <div style="margin-top: auto; padding: 20px; text-align: center; border-top: 3px solid #000; background: #fff;">
+            <div data-i18n="scanToOrder" style="font-size: 0.8rem; margin-bottom: 5px;">Scan to order:</div>
+            <div id="qrcode" style="display:inline-block; border: 2px solid #000; padding: 5px; background: white;"></div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div class="header-top">
+            <h1 data-i18n="commandCenter">COMMAND CENTER</h1>
+            <div class="neo-badge" data-i18n="systemOnline" style="background: var(--main-green);">SYSTEM ONLINE</div>
+        </div>
+
+        <!-- ORDERS TAB -->
+        <div id="tab-orders" class="tab-pane">
+            <div class="neo-box">
+                <h2 data-i18n="activePrintOrders" style="margin-bottom: 20px;">Active Print Orders</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="file">File</th>
+                            <th data-i18n="customer">Customer</th>
+                            <th data-i18n="device">Device</th>
+                            <th data-i18n="servicesSelected">Services Selected</th>
+                            <th data-i18n="total">Total</th>
+                            <th data-i18n="status">Status</th>
+                            <th data-i18n="actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Populated -->
+                    </tbody>
+                </table>
+                <div id="orders-pagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                    <button class="neo-btn" onclick="prevOrdersPage()" style="padding: 5px 15px;">Prev</button>
+                    <span id="orders-page-info" style="font-weight:900;">Page 1</span>
+                    <button class="neo-btn" onclick="nextOrdersPage()" style="padding: 5px 15px;">Next</button>
                 </div>
             </div>
         </div>
 
-        <section id="log-section" class="mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h2 class="section-title">Logs</h2>
-                    <div class="clear-logs-container">
-                        <button id="clear-logs" class="btn btn-sm btn-danger">Clear Logs</button>
+        <!-- CATALOG TAB -->
+        <div id="tab-catalog" class="tab-pane hidden">
+            <div class="neo-box">
+                <h2 id="service-form-title" data-i18n="addService" style="margin-bottom: 15px;">Add New Service</h2>
+                <form id="service-form" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <input type="hidden" id="service-id">
+                    <div style="flex: 2;">
+                        <label data-i18n="serviceName">Service Name</label>
+                        <input type="text" id="service-name" class="neo-input" required>
                     </div>
-                    <div id="log" class="log-container">
-                        <!-- Logs will be displayed here -->
+                    <div style="flex: 1;">
+                        <label data-i18n="servicePrice">Price (₹)</label>
+                        <input type="number" step="0.01" id="service-price" class="neo-input" required>
                     </div>
-                </div>
+                    <button type="submit" id="service-submit-btn" class="neo-btn cyan" style="padding: 12px 20px;">Add</button>
+                </form>
             </div>
-        </section>
+            
+            <div class="neo-box">
+                <h2 data-i18n="currentServices">Current Services</h2>
+                <table style="margin-top: 15px;">
+                    <thead><tr><th data-i18n="name">Name</th><th data-i18n="price">Price (₹)</th><th data-i18n="actions">Actions</th></tr></thead>
+                    <tbody id="services-table-body"></tbody>
+                </table>
+            </div>
+        </div>
 
-        <section id="about-section" class="mb-4">
-            <h2 class="section-title">About</h2>
-            <div class="card about-card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 text-center section-divider">
-                            <h3>Business Owner: Shubhi Rawat</h3>
-                            <img src="/res/shubhi.jpg" alt="Shubhi Rawat" class="rounded-circle" width="150">
-                            <p>Shubhi Rawat is the visionary behind this project, ensuring that customers and shopkeepers have a seamless experience.</p>
-                        </div>
-                        <div class="col-md-6 text-center">
-                            <h4>App Developer: Hardik Rawat</h4>
-                            <img src="https://avatars.githubusercontent.com/u/84527217?v=4" alt="Hardik Rawat" class="rounded-circle" width="150">
-                            <p>Hardik Rawat is the developer of this application, ensuring that it runs smoothly and efficiently.</p>
-                            <p>
-                                <a href="https://github.com/hardikrawat" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
-                                <a href="https://www.linkedin.com/in/hardikrawat" target="_blank" class="btn btn-outline-dark btn-sm">LinkedIn</a>
-                            </p>
-                        </div>
-                    </div>
+        <!-- EXPENSES TAB -->
+        <div id="tab-expenses" class="tab-pane hidden">
+            <div class="neo-box" style="margin-bottom: 20px; max-width: 500px;">
+                <h2 data-i18n="logAnExpense">Log an Expense</h2>
+                <form id="add-expense-form" style="margin-top: 15px;">
+                    <input type="text" id="exp-desc" class="neo-input" data-i18n-ph="description" placeholder="Description (e.g. A4 Paper Ream)" required>
+                    <input type="number" id="exp-amount" class="neo-input" data-i18n-ph="amount" placeholder="Amount (₹)" step="0.01" required>
+                    <button type="submit" class="neo-btn magenta" data-i18n="logExpense">Log Expense</button>
+                </form>
+            </div>
+            
+            <div class="neo-box">
+                <h2 data-i18n="expenseHistory">Expense History</h2>
+                <table style="margin-top: 15px;">
+                    <thead><tr><th data-i18n="date">Date</th><th data-i18n="description">Description</th><th data-i18n="amount">Amount (₹)</th><th data-i18n="actions">Actions</th></tr></thead>
+                    <tbody id="expenses-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FINANCE TAB -->
+        <div id="tab-finance" class="tab-pane hidden">
+            <div class="grid-cards">
+                <div class="stat-card">
+                    <h3 data-i18n="totalRevenue">Total Revenue</h3>
+                    <div class="value" id="fin-rev">₹0.00</div>
+                </div>
+                <div class="stat-card">
+                    <h3 data-i18n="totalExpenses">Total Expenses</h3>
+                    <div class="value" id="fin-exp" style="color: var(--main-magenta);">-₹0.00</div>
+                </div>
+                <div class="stat-card" style="background: var(--main-green);">
+                    <h3 data-i18n="netProfit">Net Profit</h3>
+                    <div class="value" id="fin-profit">₹0.00</div>
                 </div>
             </div>
-        </section>
+            <div class="neo-box">
+                <p><strong data-i18n="note">Note:</strong> <span data-i18n="noteRev">Revenue only includes orders marked as "Paid" or "Completed".</span></p>
+            </div>
+        </div>
+
     </div>
-    <div id="toast" class="toast"></div>
+
+    <div id="toast" class="toast">Action Successful!</div>
+
     <script>
-        document.getElementById('upload-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var formData = new FormData(this);
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
+        const translations = {
+            en: {
+                uploadForPrint: "Print Express",
+                selectFile: "1. Choose your document",
+                selectServices: "2. Select what you need (Optional)",
+                total: "Total",
+                submitOrder: "Submit Order",
+                ordersCenter: "Orders Center",
+                serviceCatalog: "Service Catalog",
+                logExpenses: "Log Expenses",
+                financeDash: "Finance Dash",
+                scanToOrder: "Scan to order:",
+                commandCenter: "COMMAND CENTER",
+                systemOnline: "SYSTEM ONLINE",
+                activePrintOrders: "Active Print Orders",
+                file: "File",
+                customer: "Customer",
+                device: "Device",
+                servicesSelected: "Services Selected",
+                status: "Status",
+                actions: "Actions",
+                addNewService: "Add New Service",
+                serviceName: "Service Name",
+                price: "Price (₹)",
+                servicePrice: "Price (₹)",
+                addService: "Add Service",
+                currentServices: "Current Services",
+                name: "Name",
+                logAnExpense: "Log an Expense",
+                description: "Description (e.g. A4 Paper Ream)",
+                amount: "Amount (₹)",
+                logExpense: "Log Expense",
+                expenseHistory: "Expense History",
+                date: "Date",
+                totalRevenue: "Total Revenue",
+                totalExpenses: "Total Expenses",
+                netProfit: "Net Profit",
+                noteRev: "Revenue only includes orders marked as 'Paid' or 'Completed'.",
+                btnUpdate: "Update",
+                btnDel: "Del",
+                btnEdit: "Edit"
+            },
+            hi: {
+                uploadForPrint: "प्रिंट एक्सप्रेस",
+                selectFile: "1. अपनी फ़ाइल चुनें",
+                selectServices: "2. अपनी सेवा चुनें (वैकल्पिक)",
+                total: "कुल",
+                submitOrder: "ऑर्डर सबमिट करें",
+                ordersCenter: "ऑर्डर सेंटर",
+                serviceCatalog: "सेवा सूची",
+                logExpenses: "खर्च दर्ज करें",
+                financeDash: "वित्तीय डैशबोर्ड",
+                scanToOrder: "ऑर्डर करने के लिए स्कैन करें:",
+                commandCenter: "कमांड सेंटर",
+                systemOnline: "सिस्टम ऑनलाइन",
+                activePrintOrders: "सक्रिय प्रिंट ऑर्डर",
+                file: "फ़ाइल",
+                customer: "ग्राहक",
+                device: "डिवाइस",
+                servicesSelected: "चुनी गई सेवाएं",
+                status: "स्थिति",
+                actions: "कार्रवाई",
+                addNewService: "नई सेवा जोड़ें",
+                serviceName: "सेवा का नाम",
+                price: "मूल्य (₹)",
+                servicePrice: "मूल्य (₹)",
+                addService: "सेवा जोड़ें",
+                currentServices: "वर्तमान सेवाएं",
+                name: "नाम",
+                logAnExpense: "खर्च दर्ज करें",
+                description: "विवरण (उदा. A4 पेपर रीम)",
+                amount: "राशि (₹)",
+                logExpense: "खर्च दर्ज करें",
+                expenseHistory: "खर्च का इतिहास",
+                date: "तारीख",
+                totalRevenue: "कुल आय",
+                totalExpenses: "कुल खर्च",
+                netProfit: "शुद्ध लाभ",
+                note: "नोट:",
+                noteRev: "राजस्व में केवल 'Paid' या 'Completed' चिह्नित ऑर्डर शामिल हैं।",
+                btnUpdate: "अपडेट",
+                btnDel: "हटाएं",
+                btnEdit: "संपादित करें"
+            }
+        };
+
+        let currentLang = 'hi';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            applyLanguage();
+        }
+        
+        function applyLanguage() {
+            document.getElementById('mobile-lang-btn').innerText = currentLang === 'en' ? 'HI' : 'EN';
+            document.getElementById('desktop-lang-btn').innerText = currentLang === 'en' ? 'HI' : 'EN';
+            
+            // Translate static elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+
+            // Translate placeholders
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (translations[currentLang][key]) {
+                    el.setAttribute('placeholder', translations[currentLang][key]);
+                }
+            });
+            
+            // Re-render dynamic components
+            renderCustomerServices();
+            renderServicesTable();
+            if(allOrders.length > 0) renderOrdersTable();
+        }
+
+        let allServices = [];
+        let selectedCustServices = [];
+
+        // Init QR Code
+        var publicUrl = "{{ public_url }}";
+        var localIp = "{{ local_ip }}";
+        var serverUrl = publicUrl ? publicUrl : (localIp ? "http://" + localIp + ":5005" : window.location.href);
+        new QRCode(document.getElementById("qrcode"), {
+            text: serverUrl,
+            width: 120, height: 120,
+            colorDark : "#000", colorLight : "#fff", correctLevel : QRCode.CorrectLevel.L
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tabId === 'orders') fetchOrders();
+            if (tabId === 'catalog') fetchServices();
+            if (tabId === 'expenses') fetchExpenses();
+            if (tabId === 'finance') fetchFinance();
+        }
+
+        // --- CUSTOMER LOGIC ---
+        function renderCustomerServices() {
+            const container = document.getElementById('customer-services-list');
+            container.innerHTML = '';
+            if (allServices.length === 0) {
+                container.innerHTML = `<div style="padding: 10px; text-align: center; color: #666; font-size: 0.9rem;">${currentLang === 'en' ? 'No extra services available at the moment.' : 'इस समय कोई अतिरिक्त सेवा उपलब्ध नहीं है।'}</div>`;
+                return;
+            }
+            allServices.forEach(svc => {
+                const div = document.createElement('label');
+                div.className = 'service-checkbox';
+                div.innerHTML = `
+                    <div>
+                        <input type="checkbox" onchange="toggleService('${svc.id}', this.checked)">
+                        ${svc.name}
+                    </div>
+                    <strong>₹${svc.price.toFixed(2)}</strong>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleService(id, isChecked) {
+            const svc = allServices.find(s => s.id === id);
+            if (isChecked) {
+                selectedCustServices.push({...svc, qty: 1});
+            } else {
+                selectedCustServices = selectedCustServices.filter(s => s.id !== id);
+            }
+            updateCustTotal();
+        }
+
+        function updateCustTotal() {
+            const total = selectedCustServices.reduce((sum, svc) => sum + svc.price, 0);
+            document.getElementById('cust-total').innerText = total.toFixed(2);
+        }
+
+        document.getElementById('customer-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('uploader', 'Walk-in');
+            formData.append('file', document.getElementById('cust-file').files[0]);
+            formData.append('services', JSON.stringify(selectedCustServices));
+
+            fetch('/upload', { method: 'POST', body: formData })
+            .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    showToast('File uploaded successfully!');
-                    updateFileList();
-                    addLog('File uploaded successfully', 'success', data);
+                    alert((currentLang === 'en' ? 'Order Placed Successfully! Your total is ₹' : 'ऑर्डर सफलतापूर्वक रखा गया! आपका कुल है ₹') + document.getElementById('cust-total').innerText);
+                    window.location.reload();
                 } else {
-                    showToast('File upload failed. Please try again.');
-                    addLog('File upload failed', 'error', data);
+                    alert('Error placing order.');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred. Please try again.');
-                addLog('An error occurred: ' + error.message, 'error', error);
             });
         });
 
-        function updateFileList() {
-            fetch('/files')
-            .then(response => response.json())
-            .then(files => {
-                var fileTable = document.getElementById('file-table');
-                var fileList = document.getElementById('file-list');
-                var noFilesMessage = document.getElementById('no-files-message');
-                fileList.innerHTML = '';
-                if (files.length > 0) {
-                    noFilesMessage.style.display = 'none';
-                    fileTable.style.display = 'table';
-                    files.forEach(file => {
-                        var row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${file.name}</td>
-                            <td>${file.uploader}</td>
-                            <td>${file.timestamp}</td>
-                            <td class="action-buttons">
-                                <a href="/uploads/${file.name}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="printFile('${file.name}')">Print</button>
-                            </td>
-                        `;
-                        fileList.appendChild(row);
-                    });
-                } else {
-                    noFilesMessage.style.display = 'block';
-                    fileTable.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                addLog('Error fetching file list: ' + error.message, 'error', error);
+        // --- DASHBOARD API FETCHES ---
+        function fetchServices() {
+            fetch('/api/services').then(r => r.json()).then(data => {
+                allServices = data;
+                renderCustomerServices();
+                renderServicesTable();
             });
         }
 
-        function addLog(message, level, details) {
-            var logContainer = document.getElementById('log');
-            var logEntry = document.createElement('div');
-            logEntry.className = 'log-entry ' + level;
-            logEntry.innerHTML = `
-                <div class="log-header">
-                    <span class="log-level">${level.toUpperCase()}</span>
-                    <span class="log-timestamp">${new Date().toLocaleString()}</span>
-                </div>
-                <div class="log-message">${message}</div>
-                <div class="log-actions">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="removeLog(this)">Remove</button>
-                    <button class="btn btn-sm btn-outline-info" onclick="showDetails(this)">Details</button>
-                </div>
-                <pre class="log-details">${JSON.stringify(details, null, 2)}</pre>
-            `;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
+        function deleteService(id) {
+            fetch('/api/services/' + id, {method: 'DELETE'}).then(() => fetchServices());
         }
 
-        function removeLog(button) {
-            var logEntry = button.closest('.log-entry');
-            logEntry.remove();
+        function editService(id, name, price) {
+            document.getElementById('service-id').value = id;
+            document.getElementById('service-name').value = name;
+            document.getElementById('service-price').value = price;
+            document.getElementById('service-submit-btn').innerText = translations[currentLang].btnUpdate;
+            document.getElementById('service-form-title').innerText = translations[currentLang].btnUpdate;
+            document.getElementById('service-name').focus();
         }
 
-        function showDetails(button) {
-            var logDetails = button.closest('.log-entry').querySelector('.log-details');
-            logDetails.style.display = logDetails.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function printFile(filename) {
-            var printWindow = window.open(`/uploads/${filename}`, '_blank');
-            printWindow.onload = function() {
-                printWindow.print();
+        document.getElementById('service-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('service-id').value;
+            const data = {
+                name: document.getElementById('service-name').value,
+                price: parseFloat(document.getElementById('service-price').value)
             };
-        }
-
-        document.getElementById('clear-logs').addEventListener('click', function() {
-            document.getElementById('log').innerHTML = '';
+            if(id) data.id = id;
+            
+            fetch('/api/services', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(r => r.json()).then(res => {
+                showToast('Service saved!');
+                this.reset();
+                document.getElementById('service-id').value = '';
+                document.getElementById('service-submit-btn').innerText = translations[currentLang].addService || 'Add';
+                document.getElementById('service-form-title').innerText = translations[currentLang].addService || 'Add New Service';
+                fetchServices();
+            });
         });
 
-        function showToast(message) {
-            var toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = 'toast show';
-            setTimeout(function() {
-                toast.className = toast.className.replace('show', '');
-            }, 3000);
+        let allOrders = [];
+        let ordersCurrentPage = 1;
+        const ordersPerPage = 10;
+
+        function fetchOrders() {
+            fetch('/api/orders').then(r => r.json()).then(data => {
+                allOrders = data;
+                renderOrdersTable();
+            });
+        }
+        
+        function prevOrdersPage() {
+            if (ordersCurrentPage > 1) {
+                ordersCurrentPage--;
+                renderOrdersTable();
+            }
         }
 
-        // Initial file list update
-        updateFileList();
+        function nextOrdersPage() {
+            const totalPages = Math.ceil(allOrders.length / ordersPerPage) || 1;
+            if (ordersCurrentPage < totalPages) {
+                ordersCurrentPage++;
+                renderOrdersTable();
+            }
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('orders-table-body');
+            if(!tbody) return;
+            
+            const totalPages = Math.ceil(allOrders.length / ordersPerPage) || 1;
+            if (ordersCurrentPage > totalPages) ordersCurrentPage = totalPages;
+            if (ordersCurrentPage < 1) ordersCurrentPage = 1;
+            
+            document.getElementById('orders-page-info').innerText = currentLang === 'en' ? 
+                `Page ${ordersCurrentPage} of ${totalPages}` : 
+                `पृष्ठ ${ordersCurrentPage} / ${totalPages}`;
+            
+            const start = (ordersCurrentPage - 1) * ordersPerPage;
+            const end = start + ordersPerPage;
+            const pageData = allOrders.slice(start, end);
+
+            tbody.innerHTML = pageData.map(o => {
+                let safeServices = o.services || [];
+                let svcList = '';
+                if (Array.isArray(safeServices)) {
+                    svcList = safeServices.map(s => `<div class="neo-badge">${s.name || s}</div>`).join(' ');
+                } else if (typeof safeServices === 'string') {
+                    try {
+                        let parsed = JSON.parse(safeServices);
+                        if (Array.isArray(parsed)) {
+                            svcList = parsed.map(s => `<div class="neo-badge">${s.name || s}</div>`).join(' ');
+                        } else {
+                            svcList = safeServices;
+                        }
+                    } catch(e) {
+                        svcList = safeServices;
+                    }
+                }
+                
+                let safeStatus = o.status || 'Legacy';
+                let statusColor = safeStatus === 'Paid' ? 'var(--main-green)' : (safeStatus === 'Completed' ? 'var(--main-cyan)' : 'var(--main-yellow)');
+                let orderTotal = o.total || o.total_price || 0;
+                let safeTotal = parseFloat(orderTotal).toFixed(2);
+                let safeId = o.order_id || o.filename || '';
+                let safeFilename = o.filename || safeId;
+                
+                return `
+                <tr>
+                    <td><a href="/uploads/${safeFilename}" target="_blank"><b>${safeFilename}</b></a><br><small>${o.timestamp || ''}</small></td>
+                    <td>${o.uploader || '-'}</td>
+                    <td>${o.device ? `<div style="font-size:0.8rem; line-height:1.2;"><b>${o.device.platform || 'Unknown'}</b> - ${o.device.browser || 'Unknown'}<br><span style="color:#666;">IP: ${o.device.ip || ''}</span></div>` : '-'}</td>
+                    <td>${svcList || '-'}</td>
+                    <td style="font-size:1.2rem; font-weight:900;">₹${safeTotal}</td>
+                    <td><span class="neo-badge" style="background:${statusColor}">${safeStatus}</span></td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-start;">
+                            <select class="neo-select" onchange="updateOrderStatus('${safeId}', this.value)">
+                                <option value="" disabled selected>${translations[currentLang].btnUpdate}</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Printing">Printing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                            <button class="neo-btn magenta" onclick="deleteOrder('${safeId}')" style="padding:8px 12px; margin:0;">${translations[currentLang].btnDel}</button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function updateOrderStatus(id, status) {
+            fetch('/api/orders/' + id, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: status})
+            }).then(() => fetchOrders());
+        }
+
+        function deleteOrder(id) {
+            fetch('/api/orders/' + id, {method: 'DELETE'}).then(() => fetchOrders());
+        }
+
+        function fetchExpenses() {
+            fetch('/api/expenses').then(r => r.json()).then(data => {
+                const tbody = document.getElementById('expenses-table-body');
+                if(!tbody) return;
+                tbody.innerHTML = data.map(e => `
+                    <tr>
+                        <td>${e.timestamp}</td>
+                        <td>${e.description}</td>
+                        <td>₹${parseFloat(e.amount).toFixed(2)}</td>
+                        <td><button class="neo-btn magenta" onclick="deleteExpense('${e.id}')">${translations[currentLang].btnDel}</button></td>
+                    </tr>
+                `).join('');
+            });
+        }
+
+        function deleteExpense(id) {
+            fetch('/api/expenses/' + id, {method: 'DELETE'}).then(() => fetchExpenses());
+        }
+
+        document.getElementById('add-expense-form')?.addEventListener('submit', e => {
+            e.preventDefault();
+            const payload = {
+                description: document.getElementById('exp-desc').value,
+                amount: parseFloat(document.getElementById('exp-amount').value)
+            };
+            fetch('/api/expenses', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(() => {
+                e.target.reset();
+                fetchExpenses();
+                showToast('Expense logged!');
+            });
+        });
+
+        function fetchFinance() {
+            fetch('/api/finance').then(r => r.json()).then(data => {
+                document.getElementById('fin-rev').innerText = '₹' + data.revenue.toFixed(2);
+                document.getElementById('fin-exp').innerText = '-₹' + data.expenses.toFixed(2);
+                document.getElementById('fin-profit').innerText = (data.profit < 0 ? '-' : '') + '₹' + Math.abs(data.profit).toFixed(2);
+            });
+        }
+
+        // Init
+        applyLanguage();
+        fetchServices();
+        fetchOrders();
+        fetchExpenses();
+        // Auto-refresh orders
+        setInterval(() => {
+            if(!document.getElementById('tab-orders').classList.contains('hidden')) {
+                fetchOrders();
+            }
+        }, 5000);
     </script>
 </body>
 </html>

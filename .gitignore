@@ -1,0 +1,29 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# MacOS artifacts
+.DS_Store
+**/.DS_Store
+
+# PyInstaller artifacts
+build/
+dist/
+*.spec
+
+# User uploads & data
+uploads/*
+!uploads/.gitkeep
+test_upload.txt
+
+# SSL certs if any
+*.pem
