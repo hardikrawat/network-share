@@ -658,7 +658,7 @@
             progOverlay.innerHTML = `
                 <h2 style="margin-bottom: 20px; font-size: 1.8rem; color: var(--text-color);">${progTitle}</h2>
                 <div style="width: 80%; max-width: 400px; height: 20px; background: #e5e7eb; border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                    <div id="prog-bar-fill" style="width: 0%; height: 100%; background: var(--main-cyan); transition: width 0.1s linear;"></div>
+                    <div id="prog-bar-fill" style="width: 0%; height: 100%; background: var(--main-cyan); transition: width 0.4s ease-out;"></div>
                 </div>
                 <div id="prog-text" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; color: var(--text-color);">0%</div>
             `;
@@ -676,7 +676,7 @@
             };
             
             xhr.onload = function() {
-                if (xhr.status === 200) {
+                if (xhr.status >= 200 && xhr.status < 300) {
                     const data = JSON.parse(xhr.responseText);
                     if (data.status === 'success') {
                         document.body.removeChild(progOverlay);
