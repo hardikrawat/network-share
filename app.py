@@ -231,6 +231,9 @@ if __name__ == '__main__': # pragma: no cover
     
     try:
         if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+            auth_token = os.environ.get("NGROK_AUTH_TOKEN")
+            if auth_token:
+                ngrok.set_auth_token(auth_token)
             tunnel = ngrok.connect(5005)
             print(f"[*] Ngrok Tunnel URL: {tunnel.public_url}")
             os.environ["NGROK_PUBLIC_URL"] = tunnel.public_url

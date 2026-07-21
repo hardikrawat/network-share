@@ -302,14 +302,14 @@
                 <input type="file" id="cust-file" class="neo-input" style="font-size: 1rem; padding: 10px; margin-bottom: 0;" required>
             </div>
             
-            <div style="background: #fff; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <div id="cust-services-section" style="background: #fff; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 <label data-i18n="selectServices" style="font-size: 1.1rem; display: block; margin-bottom: 8px; color: var(--text-color); font-weight: 600;">2. Select Services</label>
                 <div id="customer-services-list" style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
                     <!-- Populated dynamically -->
                 </div>
             </div>
             
-            <div style="font-size: 1.3rem; margin: 20px 0; text-align: center; padding: 15px; border-top: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">
+            <div id="cust-total-section" style="font-size: 1.3rem; margin: 20px 0; text-align: center; padding: 15px; border-top: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">
                 <span data-i18n="total">Total</span>: ₹<span id="cust-total" style="color: var(--main-yellow);">0.00</span>
             </div>
             
@@ -596,11 +596,19 @@
         // --- CUSTOMER LOGIC ---
         function renderCustomerServices() {
             const container = document.getElementById('customer-services-list');
+            const svcSection = document.getElementById('cust-services-section');
+            const totalSection = document.getElementById('cust-total-section');
+            
             container.innerHTML = '';
             if (allServices.length === 0) {
-                container.innerHTML = `<div style="padding: 10px; text-align: center; color: #666; font-size: 0.9rem;">${currentLang === 'en' ? 'No extra services available at the moment.' : 'इस समय कोई अतिरिक्त सेवा उपलब्ध नहीं है।'}</div>`;
+                svcSection.style.display = 'none';
+                totalSection.style.display = 'none';
                 return;
             }
+            
+            svcSection.style.display = 'block';
+            totalSection.style.display = 'block';
+            
             allServices.forEach(svc => {
                 const div = document.createElement('label');
                 div.className = 'service-checkbox';
@@ -641,8 +649,41 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert((currentLang === 'en' ? 'Order Placed Successfully! Your total is ₹' : 'ऑर्डर सफलतापूर्वक रखा गया! आपका कुल है ₹') + document.getElementById('cust-total').innerText);
-                    window.location.reload();
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = `
+                        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                        background: var(--bg-color);
+                        z-index: 99999;
+                        display: flex; flex-direction: column; justify-content: center; align-items: center;
+                        animation: successFadeIn 0.3s ease-out forwards;
+                    `;
+                    
+                    const msg = currentLang === 'en' ? 'Task Done!' : 'कार्य संपन्न!';
+                    
+                    overlay.innerHTML = `
+                        <div style="
+                            width: 120px; height: 120px; border-radius: 50%;
+                            background: var(--main-green);
+                            display: flex; justify-content: center; align-items: center;
+                            box-shadow: 0 10px 30px rgba(16,185,129,0.4);
+                            animation: successPopIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                        ">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <h1 style="
+                            margin-top: 30px; font-size: 2.5rem; color: var(--text-color); font-weight: 800;
+                            animation: successSlideUp 0.5s ease-out 0.2s both;
+                        ">${msg}</h1>
+                        <style>
+                            @keyframes successFadeIn { from { opacity: 0; } to { opacity: 1; } }
+                            @keyframes successPopIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+                            @keyframes successSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                        </style>
+                    `;
+                    document.body.appendChild(overlay);
+                    setTimeout(() => window.location.reload(), 2500);
                 } else {
                     alert('Error placing order.');
                 }
@@ -656,6 +697,22 @@
                 renderCustomerServices();
                 renderServicesTable();
             });
+        }
+        function renderServicesTable() {
+            const tbody = document.getElementById('services-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = allServices.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>₹${s.price.toFixed(2)}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="neo-btn" onclick="editService('${s.id}', '${s.name}', ${s.price})" style="padding: 4px 8px; margin:0; font-size:0.9rem;">${translations[currentLang]?.btnUpdate || 'Edit'}</button>
+                            <button class="neo-btn magenta" onclick="deleteService('${s.id}')" style="padding: 4px 8px; margin:0; font-size:0.9rem;">${translations[currentLang]?.btnDel || 'Delete'}</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function deleteService(id) {
